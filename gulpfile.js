@@ -10,6 +10,8 @@ var gulp = require('gulp'),
 	cssMin = require('gulp-minify-css'),
 	rimRaf = require('rimraf'),
 	browserSync = require('browser-sync'),
+	concat = require('gulp-concat'),
+	rename = require('gulp-rename'),
 	reload = browserSync.reload;
 
 var path = {
@@ -19,8 +21,9 @@ var path = {
 		style: 'public/styles/'
 	},
 	src: {
-		html: 'src/**/*.html',
-		style: 'src/**/*.less', 
+		html: 'src/pages/*.html',
+		styleCommon: ['src/styles/common/*.less', 'src/styles/components/*.less'], 
+		stylePage: 'src/styles/pages/*.less',
 		js: 'src/**/*.js'
 	},
 	watch: {
@@ -52,10 +55,23 @@ gulp.task('html:build', function(){
 		.pipe(reload({stream: true}));
 });
 
-gulp.task('style:build', function(){
-	gulp.src(path.src.style)
+gulp.task('style-common:build', function(){
+	gulp.src(path.src.styleCommon)
 		.pipe(sourcemaps.init())
 		.pipe(less([lessPluginAutoPrefix, cssMin({keepBreaks: false})]))
+		.pipe(concat('common.min.css'))
+		.pipe(sourcemaps.write())
+		.pipe(gulp.dest(path.build.style))
+		.pipe(reload({stream: true}));
+});
+
+gulp.task('style-page:build', function(){
+	gulp.src(path.src.stylePage)
+		.pipe(sourcemaps.init())
+		.pipe(less([lessPluginAutoPrefix, cssMin({keepBreaks: false})]))
+		.pipe(rename(function(path) {
+			path.basename+='-styles.css';
+		}))
 		.pipe(sourcemaps.write())
 		.pipe(gulp.dest(path.build.style))
 		.pipe(reload({stream: true}));
@@ -66,6 +82,7 @@ gulp.task('js:build', function(){
 		.pipe(rigger())
 		.pipe(sourcemaps.init())
 		.pipe(uglify())
+		.pipe(concat('main.min.js'))
 		.pipe(sourcemaps.write())
 		.pipe(gulp.dest(path.build.js))
 		.pipe(reload({stream: true}));
@@ -73,16 +90,20 @@ gulp.task('js:build', function(){
 
 gulp.task('build', [
 	'html:build',
-	'style:build',
+	'style-common:build',
+	'style-page:build',
 	'js:build'
 ]);
+
+
 
 gulp.task('watch', function(){
 	watch([path.watch.html], function(event, cb) {
 		gulp.start('html:build');
 	});
 	watch([path.watch.style], function(event, cb) {
-		gulp.start('style:build');
+		gulp.start('style-common:build');
+		gulp.start('style-page:build');
 	});
 	watch([path.watch.js], function(event, cb) {
 		gulp.start('js:build');
