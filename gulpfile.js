@@ -70,7 +70,7 @@ gulp.task('style-page:build', function(){
 		.pipe(sourcemaps.init())
 		.pipe(less([lessPluginAutoPrefix, cssMin({keepBreaks: false})]))
 		.pipe(rename(function(path) {
-			path.basename+='-styles.css';
+			path.basename+='-styles';
 		}))
 		.pipe(sourcemaps.write())
 		.pipe(gulp.dest(path.build.style))
