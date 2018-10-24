@@ -12,19 +12,23 @@ var gulp = require('gulp'),
 	browserSync = require('browser-sync'),
 	concat = require('gulp-concat'),
 	rename = require('gulp-rename'),
+	inject = require('gulp-inject'),
+	gulpif = require('gulp-if'),
 	reload = browserSync.reload;
 
 var path = {
 	build: {
 		html: 'public/',
+		htmlIndex: 'public/index.html',
 		js: 'public/scripts/',
+		jsMain: 'public/scripts/main.min.js',
 		style: 'public/styles/'
 	},
 	src: {
 		html: 'src/pages/*.html',
 		styleCommon: ['src/styles/common/*.less', 'src/styles/components/*.less'], 
 		stylePage: 'src/styles/pages/*.less',
-		js: 'src/**/*.js'
+		js: ['src/**/*.js', 'node_modules/scrollmagic/scrollmagic/minified/*js']
 	},
 	watch: {
 		html: 'src/**/*.html',
@@ -51,6 +55,7 @@ gulp.task('webserver', function(){
 gulp.task('html:build', function(){
 	gulp.src(path.src.html)
 		.pipe(rigger())
+		//.pipe(inject(gulp.src(path.build.jsMain, {read: false}), {relative:true}))
 		.pipe(gulp.dest(path.build.html))
 		.pipe(reload({stream: true}));
 });
@@ -88,14 +93,19 @@ gulp.task('js:build', function(){
 		.pipe(reload({stream: true}));
 })
 
+gulp.task('inject:build', function() {
+	gulp.src(path.build.htmlIndex)
+		.pipe(inject(gulp.src(path.build.jsMain, {read: false}), {relative:true}))
+		.pipe(gulp.dest(path.build.html));
+})
+
 gulp.task('build', [
-	'html:build',
 	'style-common:build',
 	'style-page:build',
-	'js:build'
+	'js:build',
+	'html:build',
+	'inject:build'
 ]);
-
-
 
 gulp.task('watch', function(){
 	watch([path.watch.html], function(event, cb) {
@@ -110,11 +120,8 @@ gulp.task('watch', function(){
 	});
 });
 
-
-
 gulp.task('clean', function(cb) {
 	rimRaf(path.clean, cb);
 });
-
 
 gulp.task('default', ['build', 'webserver', 'watch'])
